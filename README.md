@@ -30,4 +30,3 @@ The output HTML report will be saved to the `output/` directory.
 
 - Python 3.11+
 - [arxiv](https://pypi.org/project/arxiv/) — ArXiv API access
-- [anthropic](https://pypi.org/project/anthropic/) — Claude API for intelligent ranking
