@@ -1,0 +1,14 @@
+CLAUDE.md
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.env
+.venv/
+output/
+*.html
+!templates/*.html
+.DS_Store
