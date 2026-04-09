@@ -3,3 +3,4 @@ crewai-tools==1.12.2
 arxiv==2.4.1                                                                                                                                       
 python-dotenv==1.1.0                                                                                                                               
 litellm
+jinja2
