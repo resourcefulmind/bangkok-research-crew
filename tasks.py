@@ -5,8 +5,8 @@ from agents import (
     impact_evaluator, 
     practical_evaluator, 
     ranking_synthesizer, 
-    output_agent, 
 )
+from models import RankingResult
 
 # Task 1 - Search Arxiv for papers
 search_task = Task(       
@@ -94,57 +94,25 @@ practical_task = Task(
 
 # Task 5 - Rank the Papers
 ranking_task = Task(      
-    description=(                                                                                                                                                                                                                             
+    description=(
         "Using the novelty, impact, and practicality evaluations from the "
-        "three specialist evaluators, produce a final ranking of the top 10 "                                                                                                                                                                 
+        "three specialist evaluators, produce a final ranking of the top 10 "
         "most important papers. For each paper, calculate a composite score "
-        "by weighing novelty, impact, and practicality roughly equally. When "                                                                                                                                                                
+        "by weighing novelty, impact, and practicality roughly equally. When "
         "evaluators disagree — for example, high novelty but low practicality "
-        "— explain the trade-off and justify your ranking decision. For each "                                                                                                                                                                
-        "paper in the top 10, provide: the final rank (1-10), the composite "
-        "score out of 10, the individual novelty score, impact score, and "
-        "practicality score, and a 2-3 sentence explanation of why it earned "
-        "its position."                                                                                                                                                                                                                       
-    ),                                                                                                                                                                                                                                        
-    expected_output=(                                                                                                                                                                                                                         
-        "A ranked list of the top 10 papers. Each entry includes: rank "                                                                                                                                                                      
-        "position, paper title, authors, ArXiv URL, PDF link, composite "                                                                                                                                                                     
-        "score (out of 10), individual novelty/impact/practicality scores, "                                                                                                                                                                  
-        "and a clear explanation of the ranking rationale."                                                                                                                                                                                   
-    ),                                 
+        "— explain the trade-off and justify your ranking decision. "
+        "For each paper in the top 10, provide: the final rank (1-10), "
+        "the exact paper title, composite score out of 10, the individual "
+        "novelty score, impact score, and practicality score, and a 2-3 "
+        "sentence rationale explaining why it earned its position."
+    ),
+    expected_output=(
+        "A ranked list of the top 10 papers. Each entry includes: rank, "
+        "title, composite score (out of 10), individual novelty/impact/"
+        "practicality scores, and a clear ranking rationale."
+    ),
     agent=ranking_synthesizer,
     context=[novelty_task, impact_task, practical_task],
+    output_pydantic=RankingResult, 
     human_input=False,  # Temporarily disabled for testing                                                                                                                                                                                                                         
-)
-
-# Task 6 - Generate Report
-output_task = Task(     
-    description=(         
-        "Generate a self-contained HTML report for the top 10 ranked research "                                                                                                                                                               
-        "papers. The report must use inline CSS with no external dependencies "
-        "and no JavaScript libraries. Design it with an Apple-inspired "                                                                                                                                                                      
-        "glassmorphism aesthetic: frosted glass card effects using "                                                                                                                                                                          
-        "backdrop-filter blur and rgba backgrounds, layered box-shadows for "                                                                                                                                                                 
-        "depth, soft rounded corners with 16px border-radius, a soft gradient "                                                                                                                                                               
-        "background, and smooth hover transitions. Use the system font stack "
-        "(-apple-system, BlinkMacSystemFont, Segoe UI, Roboto). The layout "
-        "should be a centered container with max-width 900px. Include a hero "                                                                                                                                                                
-        "header section showing the date, total papers found, and categories "
-        "searched. Each paper is a glassmorphic card showing: rank badge, "                                                                                                                                                                   
-        "composite score, title linked to the ArXiv page, authors, a one-line "                                                                                                                                                               
-        "summary of why the paper matters, novelty/impact/practicality scores "                                                                                                                                                               
-        "as color-coded pill badges, the abstract in a collapsible details "                                                                                                                                                                  
-        "element, category tags, and a PDF link button. Include a footer with "                                                                                                                                                               
-        "search parameters and generation timestamp. Support dark mode via "                                                                                                                                                                  
-        "prefers-color-scheme media query and print styles via print media "                                                                                                                                                                  
-        "query. Save the file as 'output/report.html'."                                                                                                                                                                                       
-    ),                                                                                                                                                                                                                                        
-    expected_output=(                  
-        "A complete, self-contained HTML file with inline CSS. The file "                                                                                                                                                                     
-        "should be visually polished with glassmorphism design, fully "
-        "responsive, and saved to output/report.html."                                                                                                                                                                                        
-    ),                                                                                                                                                                                                                                        
-    agent=output_agent,                                                                                                                                                                                                                       
-    context=[ranking_task],                                                                                                                                                                                                                   
-    output_file="output/report.html",                                                                                                                                                                                                         
 )

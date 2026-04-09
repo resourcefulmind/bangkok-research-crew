@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 10 Research Papers — {{ search_date }}</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #ffffff;
+            --bg-card-hover: #fafafa;
+            --border: #e5e5e7;
+            --border-light: #f0f0f2;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #86868b;
+            --accent: #0066cc;
+            --accent-hover: #0055b3;
+            --accent-light: rgba(0, 102, 204, 0.08);
+            --accent-border: rgba(0, 102, 204, 0.2);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --score-bg: #f5f5f7;
+            --score-border: #e5e5e7;
+            --score-text: #1d1d1f;
+            --tag-bg: #f5f5f7;
+            --tag-border: #e5e5e7;
+            --hero-gradient: linear-gradient(135deg, #fbfbfd 0%, #f5f5f7 100%);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000;
+                --bg-secondary: #1c1c1e;
+                --bg-card: #1c1c1e;
+                --bg-card-hover: #2c2c2e;
+                --border: #38383a;
+                --border-light: #2c2c2e;
+                --text-primary: #f5f5f7;
+                --text-secondary: #a1a1a6;
+                --text-tertiary: #86868b;
+                --accent: #2997ff;
+                --accent-hover: #40a0ff;
+                --accent-light: rgba(41, 151, 255, 0.1);
+                --accent-border: rgba(41, 151, 255, 0.25);
+                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+                --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+                --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+                --score-bg: #2c2c2e;
+                --score-border: #38383a;
+                --score-text: #f5f5f7;
+                --tag-bg: #2c2c2e;
+                --tag-border: #38383a;
+                --hero-gradient: linear-gradient(135deg, #1c1c1e 0%, #000000 100%);
+            }
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero */
+        .hero {
+            background: var(--hero-gradient);
+            border-bottom: 1px solid var(--border);
+            padding: 80px 24px 60px;
+            text-align: center;
+            margin-bottom: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            left: -20%;
+            width: 70%;
+            height: 140%;
+            background: radial-gradient(ellipse, rgba(120, 140, 255, 0.12) 0%, transparent 70%);
+            animation: drift 14s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            right: -15%;
+            width: 60%;
+            height: 120%;
+            background: radial-gradient(ellipse, rgba(200, 120, 255, 0.10) 0%, transparent 70%);
+            animation: drift 18s ease-in-out infinite alternate-reverse;
+            pointer-events: none;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -20px) scale(1.05); }
+            100% { transform: translate(-20px, 15px) scale(0.95); }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .hero::before {
+                background: radial-gradient(ellipse, rgba(80, 120, 255, 0.15) 0%, transparent 70%);
+            }
+            .hero::after {
+                background: radial-gradient(ellipse, rgba(160, 80, 255, 0.12) 0%, transparent 70%);
+            }
+        }
+
+        .hero-inner {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .hero-eyebrow {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+            margin-bottom: 12px;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 6vw, 48px);
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            line-height: 1.5;
+            max-width: 480px;
+            margin: 0 auto 36px;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .hero-stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 2px;
+        }
+
+        /* Section */
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 24px;
+        }
+
+        /* Paper Cards */
+        .paper-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 16px;
+            background: var(--bg-card);
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .paper-card:hover {
+            background: var(--bg-card-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .rank-badge {
+            background: var(--text-primary);
+            color: var(--bg);
+            font-size: 13px;
+            font-weight: 700;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .card-title a {
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .card-title a:hover {
+            color: var(--accent);
+        }
+
+        .card-authors {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .card-rationale {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* Scores */
+        .scores {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .score-pill {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 6px;
+            background: var(--score-bg);
+            border: 1px solid var(--score-border);
+            color: var(--score-text);
+        }
+
+        .score-pill.primary {
+            background: var(--accent-light);
+            border-color: var(--accent-border);
+            color: var(--accent);
+        }
+
+        /* Categories */
+        .categories {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .category-tag {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 4px;
+            padding: 2px 8px;
+        }
+
+        /* Abstract */
+        details {
+            margin-bottom: 16px;
+        }
+
+        summary {
+            font-size: 14px;
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        summary:hover {
+            color: var(--accent-hover);
+        }
+
+        details p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-top: 12px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        /* PDF Button */
+        .pdf-link {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--accent-light);
+            border: 1px solid var(--accent-border);
+            border-radius: 8px;
+            padding: 8px 20px;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+
+        .pdf-link:hover {
+            background: var(--accent-border);
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            margin-top: 48px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            text-align: center;
+        }
+
+        /* Print */
+        @media print {
+            body { background: white; color: black; }
+            .hero { background: white; border: none; }
+            .paper-card { break-inside: avoid; box-shadow: none; }
+            details p { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-inner">
+        <p class="hero-eyebrow">Daily Research Digest</p>
+        <h1>Top 10 AI Papers</h1>
+        <p class="hero-subtitle">The most important research papers published on {{ search_date }}, ranked by novelty, impact, and practical relevance.</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value">{{ total_papers_searched }}</div>
+                <div class="hero-stat-label">Evaluated</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">10</div>
+                <div class="hero-stat-label">Ranked</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">{{ categories_searched.split(', ') | length }}</div>
+                <div class="hero-stat-label">Categories</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <p class="section-label">Ranked Papers</p>
+
+    {% for paper in papers %}
+    <div class="paper-card">
+        <div class="card-header">
+            <div class="rank-badge">{{ paper.rank }}</div>
+            <div>
+                <div class="card-title"><a href="{{ paper.arxiv_url }}" target="_blank" rel="noopener">{{ paper.title }}</a></div>
+                <div class="card-authors">{{ paper.authors }}</div>
+            </div>
+        </div>
+
+        <p class="card-rationale">{{ paper.rationale }}</p>
+
+        <div class="scores">
+            <span class="score-pill primary">{{ paper.composite_score }}/10</span>
+            <span class="score-pill">Novelty: {{ paper.novelty_score }}</span>
+            <span class="score-pill">Impact: {{ paper.impact_score }}</span>
+            <span class="score-pill">Practical: {{ paper.practicality_score }}</span>
+        </div>
+
+        <div class="categories">
+            {% for cat in paper.categories.split(', ') %}
+            <span class="category-tag">{{ cat }}</span>
+            {% endfor %}
+        </div>
+
+        <details>
+            <summary>View Abstract</summary>
+            <p>{{ paper.abstract }}</p>
+        </details>
+
+        <a href="{{ paper.pdf_url }}" class="pdf-link" target="_blank" rel="noopener">View PDF</a>
+    </div>
+    {% endfor %}
+
+    <div class="footer">
+        <p>Generated {{ generated_at }} · {{ categories_searched }} · {{ total_papers_searched }} papers evaluated</p>
+    </div>
+</div>
+
+</body>
+</html>

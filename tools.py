@@ -11,6 +11,9 @@ class ArxivSearchTool(BaseTool):
         "Example: '2026-04-01, cs.AI, cs.LG, cs.CL'"
     )
 
+    # Store results so main.py can access them after the pipeline
+    last_results: list = []
+
     def _run(self, query: str) -> str:
         # Parse the input — expects "date, cat1, cat2, ..."
         parts = [p.strip() for p in query.split(",")]
@@ -51,11 +54,14 @@ class ArxivSearchTool(BaseTool):
                 "authors": ", ".join([a.name for a in result.authors]),
                 "abstract": result.summary,
                 "arxiv_url": result.entry_id,
-                "pdf_url": result.pdf_url,
+                "pdf_url": str(result.pdf_url),
                 "categories": ", ".join(result.categories),
                 "published": str(result.published),
             }
             papers.append(paper)
+
+        # Save for later use in main.py
+        ArxivSearchTool.last_results = papers
 
         if not papers:
             return f"No papers found for query: {full_query}"
