@@ -14,9 +14,21 @@ Human feedback is collected between steps so you can monitor progress and adjust
 
 ## Setup
 
-```bash
-pip install -r requirements.txt
-```
+1. Copy `.env.example` to `.env` and add your Anthropic API key:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   > **Note:** If you're using **zsh** (default on macOS), pip commands with square brackets need quotes:
+   > ```bash
+   > pip install 'crewai[anthropic]'
+   > ```
+   > This applies any time you see `package[extra]` syntax.
 
 ## Usage
 

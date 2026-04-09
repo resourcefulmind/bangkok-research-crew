@@ -11,20 +11,19 @@ from agents import (
 # Task 1 - Search Arxiv for papers
 search_task = Task(       
     description=(                                                                                                                                                                                                                             
-        "Search ArXiv for all research papers published on {date} in the "
-        "following categories: {categories}. For each paper found, collect: "                                                                                                                                                                 
-        "the title, full list of authors, complete abstract, ArXiv URL, "
-        "direct PDF link, and all categories the paper is listed under. "                                                                                                                                                                     
-        "Return the complete list of papers with all metadata. Do not "
-        "evaluate or filter the papers — return everything you find."                                                                                                                                                                         
+        "Search ArXiv for research papers published on {date}. "
+        "Call the arxiv_search tool EXACTLY ONCE with this input: "
+        "'{date}, {categories}' — the tool handles combining categories "
+        "internally. Do NOT make separate calls per category. "
+        "Return whatever the tool finds. Do not evaluate or filter papers."                                                                                                                                                                         
     ),                                 
     expected_output=(                                                                                                                                                                                                                         
         "A complete list of all papers found, where each paper includes: "
         "title, authors, abstract, ArXiv URL, PDF link, and categories. "                                                                                                                                                                     
         "Also include the total number of papers found."
     ),                                                                                                                                                                                                                                        
-    agent=search_agent,                                                                                                                                                                                                                       
-    human_input=True,                                                                                                                                                                                                                         
+    agent=search_agent,
+    human_input=False,  # Temporarily disabled for testing
 )
 
 # Task 2 - Evaluate Novelty of Papers
@@ -113,9 +112,9 @@ ranking_task = Task(
         "score (out of 10), individual novelty/impact/practicality scores, "                                                                                                                                                                  
         "and a clear explanation of the ranking rationale."                                                                                                                                                                                   
     ),                                 
-    agent=ranking_synthesizer,                                                                                                                                                                                                                
+    agent=ranking_synthesizer,
     context=[novelty_task, impact_task, practical_task],
-    human_input=True,                                                                                                                                                                                                                         
+    human_input=False,  # Temporarily disabled for testing                                                                                                                                                                                                                         
 )
 
 # Task 6 - Generate Report

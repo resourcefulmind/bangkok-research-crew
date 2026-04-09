@@ -13,8 +13,6 @@ from tasks import (
 
 load_dotenv() 
 
-os.environ["OPENAI_MODEL_NAME"] = "groq/llama-3.3-70b-versatile"
-
 crew = Crew(
     agents=[
         search_task.agent, 

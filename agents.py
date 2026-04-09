@@ -1,15 +1,13 @@
 import os 
 from dotenv import load_dotenv
 from crewai import Agent, LLM
-from crewai_tools import ArxivPaperTool
+from tools import ArxivSearchTool
 
 load_dotenv()
 
-# Set up the LLM(groq - free tier)
-llm = LLM(model="groq/llama-3.3-70b-versatile")
-
-# Setup tools
-arxiv_tool = ArxivPaperTool()
+# Set up the LLM (Claude Sonnet via Anthropic API) 
+llm = LLM(model="anthropic/claude-sonnet-4-6") 
+arxiv_tool = ArxivSearchTool()
 
 # Agent 1 - Search Arxiv for papers
 search_agent = Agent(                  
