@@ -1,7 +1,7 @@
 import os 
 from dotenv import load_dotenv
 from crewai import Agent, LLM
-from tools import ArxivSearchTool
+from .tools import ArxivSearchTool
 
 load_dotenv()
 

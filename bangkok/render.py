@@ -1,6 +1,6 @@
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
-from models import RankedPaper
+from .models import RankedPaper
 
 
 def render_report(

@@ -1,16 +1,16 @@
 import argparse
 from dotenv import load_dotenv
 from crewai import Crew, Process
-from tasks import (
+from bangkok.tasks import (
     search_task,
     novelty_task,
     impact_task,
     practical_task,
     ranking_task,
 )
-from models import RankedPaper
-from tools import ArxivSearchTool
-from render import render_report
+from bangkok.models import RankedPaper
+from bangkok.tools import ArxivSearchTool
+from bangkok.render import render_report
 
 load_dotenv()
 

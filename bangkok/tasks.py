@@ -1,12 +1,12 @@
 from crewai import Task
-from agents import (
+from .agents import (
     search_agent, 
     novelty_evaluator, 
     impact_evaluator, 
     practical_evaluator, 
     ranking_synthesizer, 
 )
-from models import RankingResult
+from .models import RankingResult
 
 # Task 1 - Search Arxiv for papers
 search_task = Task(       
