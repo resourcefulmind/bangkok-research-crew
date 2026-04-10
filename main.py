@@ -2,36 +2,17 @@ import argparse
 from dotenv import load_dotenv
 from crewai import Crew, Process
 from bangkok.tasks import (
-    search_task,
-    novelty_task,
-    impact_task,
-    practical_task,
-    ranking_task,
+    make_search_task,
+    make_novelty_task,
+    make_impact_task,
+    make_practical_task,
+    make_ranking_task,
 )
 from bangkok.models import RankedPaper
 from bangkok.tools import ArxivSearchTool
 from bangkok.render import render_report
 
 load_dotenv()
-
-crew = Crew(
-    agents=[
-        search_task.agent,
-        novelty_task.agent,
-        impact_task.agent,
-        practical_task.agent,
-        ranking_task.agent,
-    ],
-    tasks=[
-        search_task,
-        novelty_task,
-        impact_task,
-        practical_task,
-        ranking_task,
-    ],
-    process=Process.sequential,
-    verbose=True,
-)
 
 
 def merge_rankings_with_search(ranking_result, search_papers):
@@ -94,6 +75,33 @@ def main():
 
     print(f"\nSearching ArXiv for papers on {args.date}")
     print(f"Categories: {categories_str}\n")
+
+    # Build tasks using factory functions — fresh instances per run
+    search_task = make_search_task()
+    novelty_task = make_novelty_task(search_task)
+    impact_task = make_impact_task(search_task)
+    practical_task = make_practical_task(search_task)
+    ranking_task = make_ranking_task(novelty_task, impact_task, practical_task)
+
+    # Build the crew
+    crew = Crew(
+        agents=[
+            search_task.agent,
+            novelty_task.agent,
+            impact_task.agent,
+            practical_task.agent,
+            ranking_task.agent,
+        ],
+        tasks=[
+            search_task,
+            novelty_task,
+            impact_task,
+            practical_task,
+            ranking_task,
+        ],
+        process=Process.sequential,
+        verbose=True,
+    )
 
     # Run the crew
     result = crew.kickoff(
