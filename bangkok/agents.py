@@ -1,12 +1,12 @@
-import os 
+import os
 from dotenv import load_dotenv
 from crewai import Agent, LLM
-from tools import ArxivSearchTool
+from .tools import ArxivSearchTool
 
 load_dotenv()
 
-# Set up the LLM (Claude Sonnet via Anthropic API) 
-llm = LLM(model="anthropic/claude-sonnet-4-6") 
+# Set up the LLM — model configurable via LLM_MODEL env var
+llm = LLM(model=os.getenv("LLM_MODEL", "anthropic/claude-sonnet-4-6")) 
 arxiv_tool = ArxivSearchTool()
 
 # Agent 1 - Search Arxiv for papers
