@@ -8,48 +8,11 @@ from bangkok.tasks import (
     make_practical_task,
     make_ranking_task,
 )
-from bangkok.models import RankedPaper
+from bangkok.models import merge_rankings_with_search
 from bangkok.tools import ArxivSearchTool
 from bangkok.render import render_report
 
 load_dotenv()
-
-
-def merge_rankings_with_search(ranking_result, search_papers):
-    """Combine LLM ranking scores with original search metadata."""
-    merged = []
-    for ranked in ranking_result.papers:
-        # Find matching paper from search results by title
-        match = None
-        for paper in search_papers:
-            if paper["title"].lower().strip() == ranked.title.lower().strip():
-                match = paper
-                break
-
-        # Fuzzy fallback — check if title is contained
-        if not match:
-            for paper in search_papers:
-                if (ranked.title.lower()[:50] in paper["title"].lower()
-                        or paper["title"].lower()[:50] in ranked.title.lower()):
-                    match = paper
-                    break
-
-        merged.append(RankedPaper(
-            rank=ranked.rank,
-            title=ranked.title,
-            authors=match["authors"] if match else "Unknown",
-            arxiv_url=match["arxiv_url"] if match else "#",
-            pdf_url=match["pdf_url"] if match else "#",
-            categories=match["categories"] if match else "",
-            abstract=match["abstract"] if match else "",
-            composite_score=ranked.composite_score,
-            novelty_score=ranked.novelty_score,
-            impact_score=ranked.impact_score,
-            practicality_score=ranked.practicality_score,
-            rationale=ranked.rationale,
-        ))
-
-    return merged
 
 
 def main():
@@ -113,7 +76,7 @@ def main():
 
     # Merge ranking scores with original search metadata
     search_papers = ArxivSearchTool.last_results
-    ranked_papers = merge_rankings_with_search(result.pydantic, search_papers)
+    ranked_papers = merge_rankings_with_search(result.pydantic.papers, search_papers)
 
     # Render the report
     render_report(
