@@ -1,0 +1,3 @@
+# requirements needed to develop on the app
+pytest
+black
