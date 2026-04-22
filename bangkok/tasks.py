@@ -10,26 +10,21 @@ from .models import RankingResult
 
 
 # Task 1 - Search Arxiv for papers
-def make_search_task(feedback: str = "") -> Task:
-    description = (
-        "Search ArXiv for research papers published on {date}. "
-        "Call the arxiv_search tool EXACTLY ONCE with this input: "
-        "'{date}, {categories}' — the tool handles combining categories "
-        "internally. Do NOT make separate calls per category. "
-        "Return whatever the tool finds. Do not evaluate or filter papers."
-    )
-    if feedback:
-        description += f"\n\nUser feedback from previous attempt: {feedback}"
-
+def make_search_task() -> Task:
     return Task(
-        description=description,
+        description=(
+            "Search ArXiv for research papers published on {date}. "
+            "Call the arxiv_search tool EXACTLY ONCE with this input: "
+            "'{date}, {categories}' — the tool handles combining categories "
+            "internally. Do NOT make separate calls per category. "
+            "Return whatever the tool finds. Do not evaluate or filter papers."
+        ),
         expected_output=(
             "A complete list of all papers found, where each paper includes: "
             "title, authors, abstract, ArXiv URL, PDF link, and categories. "
             "Also include the total number of papers found."
         ),
         agent=search_agent,
-        human_input=False,  # Temporarily disabled for testing
     )
 
 
@@ -143,5 +138,4 @@ def make_ranking_task(
         agent=ranking_synthesizer,
         context=[novelty_task, impact_task, practical_task],
         output_pydantic=RankingResult,
-        human_input=False,  # Temporarily disabled for testing
     )

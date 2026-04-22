@@ -51,7 +51,7 @@ def start_run():
     return jsonify({
         "run_id": run_id, 
         "status": "started", 
-        "message": "Pipeline started in background. Check progress at /progress/<run_id>", 
+        "message": "Pipeline started in background. Check progress at /stream/<run_id>",
     }), 202
 
 # SSE endpoint for progress updates
