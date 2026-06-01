@@ -17,9 +17,16 @@ def index():
 
 @app.route("/run", methods=["POST"])
 def start_run():
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
     date = data.get("date")
+    if not date:
+        return jsonify({"error": "Missing required field: date"}), 400
+
     categories = data.get("categories", "cs.AI, cs.LG, cs.CL, cs.CV, stat.ML")
+    
 
     run_id = str(uuid.uuid4())
     
@@ -93,10 +100,16 @@ def feedback(run_id):
         return jsonify({
             "error": "Run not found", 
         }), 404
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    action = data.get("action")
+    if action not in {"approve", "adjust", "abort"}:
+        return jsonify({"error": "Invalid action. Must be one of: approve, adjust, abort"}), 400
 
     #write feedback to shared state
-    run["feedback_data"]["action"] = data.get("action", "approve")
+    run["feedback_data"]["action"] = action
     run["feedback_data"]["message"] = data.get("message", "")
 
     #signal pipeline to continue/wake up from feedback checkpoint
@@ -124,3 +137,4 @@ def report(run_id):
 
 if __name__ == "__main__": 
     app.run(debug=True, port=5000, threaded=True)
+
