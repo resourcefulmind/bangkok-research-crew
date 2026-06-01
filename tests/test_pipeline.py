@@ -2,7 +2,8 @@ import queue
 import threading 
 from unittest.mock import patch, MagicMock 
 from bangkok.pipeline import run_pipeline
-from bangkok.models import RankedPaperSummary, RankingResult
+from bangkok.models import RankedPaperSummary, RankingResult, RankedPaper
+from bangkok.render import render_report_string
 
 def _make_fake_ranking_result(): 
     """Build a fake CrewOutput that looks like what the ranking crew returns. """
@@ -132,3 +133,33 @@ def test_event_sequence_on_approve():
     fb_index = event_types.index("feedback_requested")
     complete_index = event_types.index("complete")
     assert fb_index < complete_index, "feedback_requested should come before complete"
+
+
+def test_malicious_paper_title_is_escaped():
+    """A paper title containing HTML must be escaped in the report, not rendered as live markup (XSS guard)."""
+    malicious = RankedPaper(
+        rank=1,
+        title="<script>alert('xss')</script>",
+        authors="Jane Doe",
+        arxiv_url="https://arxiv.org/abs/2001.00001",
+        pdf_url="https://arxiv.org/pdf/2001.00001",
+        categories="cs.AI",
+        abstract="A normal abstract.",
+        composite_score=9.0,
+        novelty_score=9.0,
+        impact_score=9.0,
+        practicality_score=9.0,
+        rationale="Testing escaping.",
+    )
+
+    html = render_report_string(
+        papers=[malicious],
+        total_papers_searched=1,
+        search_date="2026-04-15",
+        categories_searched="cs.AI",
+    )
+
+    # The raw tag must NOT survive into the output...
+    assert "<script>alert('xss')</script>" not in html
+    # ...it must be escaped instead
+    assert "&lt;script&gt;" in html

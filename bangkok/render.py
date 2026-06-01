@@ -1,5 +1,5 @@
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from .models import RankedPaper
 
 def render_report_string(
@@ -8,7 +8,10 @@ def render_report_string(
     search_date: str, 
     categories_searched: str, 
 ) -> str: 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = Environment(
+        loader=FileSystemLoader("templates"),
+        autoescape=select_autoescape(["html"]),
+    )
     template = env.get_template("report.html")
 
     html = template.render(
