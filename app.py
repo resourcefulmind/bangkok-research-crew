@@ -3,7 +3,7 @@ import uuid
 import queue
 import threading 
 
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, render_template
 from bangkok.pipeline import run_pipeline
 
 app = Flask(__name__)
@@ -12,8 +12,8 @@ app = Flask(__name__)
 run_states = {}
 
 @app.route("/")
-def index(): 
-    return "<h1>Bangkok Research Crew</h1><p>This is a multi-agent system that searches ArXiv for AI research papers published on a given date, ranks the top 10 by importance, and outputs a clean HTML report.</p>Dashboard coming in step 5<p>"
+def index():
+    return render_template("dashboard.html")
 
 @app.route("/run", methods=["POST"])
 def start_run():
