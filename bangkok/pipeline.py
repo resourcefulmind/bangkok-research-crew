@@ -56,6 +56,13 @@ def _run_search(run_id, date, categories, event_queue):
 
     search_papers = ArxivSearchTool.last_results
     paper_count = len(search_papers)
+
+    if not search_papers:
+        raise RuntimeError(
+            f"No papers returned for {date}. ArXiv may be unavailable, or there "
+            f"were no submissions in {categories} that day — try a recent weekday."
+        )
+
     logger.info(f"[{run_id}] Stage A: Found {paper_count} papers")
     emit_event(
         event_queue, "agent_complete",

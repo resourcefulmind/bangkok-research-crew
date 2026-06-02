@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import arxiv
 from crewai.tools import BaseTool
 
@@ -11,8 +13,10 @@ class ArxivSearchTool(BaseTool):
         "Example: '2026-04-01, cs.AI, cs.LG, cs.CL'"
     )
 
-    # Store results so main.py can access them after the pipeline
-    last_results: list = []
+    # Store results so the pipeline can access them after the crew runs.
+    # ClassVar (not a Pydantic field) so it's always a real class attribute —
+    # accessible even if the search fails before any assignment happens.
+    last_results: ClassVar[list] = []
 
     def _run(self, query: str) -> str:
         # Parse the input — expects "date, cat1, cat2, ..."

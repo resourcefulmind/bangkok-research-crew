@@ -163,3 +163,43 @@ def test_malicious_paper_title_is_escaped():
     assert "<script>alert('xss')</script>" not in html
     # ...it must be escaped instead
     assert "&lt;script&gt;" in html
+
+
+def test_empty_search_results_produces_error_event():
+    """If ArXiv returns no papers, the pipeline emits a clear error event and
+    never reaches the feedback checkpoint — not an AttributeError on last_results."""
+    event_queue = queue.Queue()
+    feedback_event = threading.Event()
+    feedback_data = {}
+    run_state = {"status": "running", "report_html": None}
+
+    with patch("bangkok.pipeline.Crew") as MockCrew, \
+         patch("bangkok.pipeline.ArxivSearchTool") as MockTool:
+
+        mock_crew = MagicMock()
+        mock_crew.kickoff.return_value = MagicMock()
+        MockCrew.return_value = mock_crew
+
+        MockTool.last_results = []   # search found nothing (e.g. arXiv 503 / empty date)
+
+        run_pipeline(
+            run_id="test-empty",
+            date="2026-05-31",
+            categories="cs.AI",
+            event_queue=event_queue,
+            feedback_event=feedback_event,
+            feedback_data=feedback_data,
+            run_state=run_state,
+        )
+
+    events = []
+    while not event_queue.empty():
+        events.append(event_queue.get_nowait())
+    event_types = [e["type"] for e in events]
+
+    assert "error" in event_types, f"Expected 'error' in events, got: {event_types}"
+    assert "feedback_requested" not in event_types, "should fail before the checkpoint"
+    assert run_state["status"] == "error"
+
+    error_event = next(e for e in events if e["type"] == "error")
+    assert "No papers" in error_event["message"]
