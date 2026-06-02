@@ -297,6 +297,13 @@
             if (summary) li.querySelector(".step-summary").textContent = summary;
         }
 
+        function agentProgress(agent, message) {
+            // Live status on the active card (e.g. "Querying arXiv…") — does not
+            // change the spinner/done state, just updates the summary line.
+            const li = ensureCard(agent);
+            if (message) li.querySelector(".step-summary").textContent = message;
+        }
+
         // ── Feedback checkpoint ─────────────────────────────────────────
         function renderFeedback(papers) {
             const list = document.getElementById("feedback-list");
@@ -375,6 +382,9 @@
                     break;
                 case "agent_complete":
                     agentComplete(event.agent, event.summary);
+                    break;
+                case "agent_progress":
+                    agentProgress(event.agent, event.message);
                     break;
                 case "feedback_requested":
                     showScreen("feedback");

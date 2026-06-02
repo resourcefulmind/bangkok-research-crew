@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import Callable, ClassVar, Optional
 
 import arxiv
 from crewai.tools import BaseTool
@@ -17,6 +17,15 @@ class ArxivSearchTool(BaseTool):
     # ClassVar (not a Pydantic field) so it's always a real class attribute —
     # accessible even if the search fails before any assignment happens.
     last_results: ClassVar[list] = []
+
+    # Optional status reporter the web pipeline injects so the tool can surface
+    # live progress (querying / found) to the dashboard. None under the CLI.
+    progress: ClassVar[Optional[Callable[[str], None]]] = None
+
+    @classmethod
+    def report(cls, message: str) -> None:
+        if cls.progress:
+            cls.progress(message)
 
     def _run(self, query: str) -> str:
         # Parse the input — expects "date, cat1, cat2, ..."
@@ -51,6 +60,8 @@ class ArxivSearchTool(BaseTool):
             sort_order=arxiv.SortOrder.Descending,
         )
 
+        self.report(f"Querying arXiv for {date_str}…")
+
         papers = []
         for result in client.results(search):
             paper = {
@@ -66,6 +77,7 @@ class ArxivSearchTool(BaseTool):
 
         # Save for later use in main.py
         ArxivSearchTool.last_results = papers
+        self.report(f"Found {len(papers)} papers")
 
         if not papers:
             return f"No papers found for query: {full_query}"

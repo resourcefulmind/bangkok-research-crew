@@ -37,6 +37,25 @@ def emit_event(q: queue.Queue, event_type: str, **data) -> None:
     logger.info(f"Event emitted: {event_type} | {data}")
 
 
+class _ArxivRetryReporter(logging.Handler):
+    """Bridges the arxiv library's backoff log records into a dashboard status,
+    so a slow or unavailable arXiv shows progress instead of a silent spinner.
+    The library logs 'Sleeping: N seconds' only when backing off before a retry.
+    """
+
+    def __init__(self, event_queue):
+        super().__init__()
+        self.event_queue = event_queue
+
+    def emit(self, record):
+        if "Sleeping" in record.getMessage():
+            emit_event(
+                self.event_queue, "agent_progress",
+                agent="Search Agent",
+                message="arXiv is responding slowly — retrying…",
+            )
+
+
 # ── Stage Functions ──────────────────────────────────────────────────
 
 
@@ -45,16 +64,30 @@ def _run_search(run_id, date, categories, event_queue):
     logger.info(f"[{run_id}] Stage A: Starting search")
     emit_event(event_queue, "agent_start", agent="Search Agent", stage="search")
 
-    search_task = make_search_task()
-    search_crew = Crew(
-        agents=[search_task.agent],
-        tasks=[search_task],
-        process=Process.sequential,
-        verbose=True,
+    # Let the search tool report live status ("Querying arXiv…", "Found N"),
+    # and bridge arXiv's retry/backoff logging so a slow arXiv shows up too.
+    ArxivSearchTool.progress = lambda msg: emit_event(
+        event_queue, "agent_progress", agent="Search Agent", message=msg
     )
-    search_crew.kickoff(inputs={"date": date, "categories": categories})
+    arxiv_logger = logging.getLogger("arxiv")
+    retry_reporter = _ArxivRetryReporter(event_queue)
+    arxiv_logger.addHandler(retry_reporter)
 
-    search_papers = ArxivSearchTool.last_results
+    try:
+        search_task = make_search_task()
+        search_crew = Crew(
+            agents=[search_task.agent],
+            tasks=[search_task],
+            process=Process.sequential,
+            verbose=True,
+        )
+        search_crew.kickoff(inputs={"date": date, "categories": categories})
+        search_papers = ArxivSearchTool.last_results
+    finally:
+        # Always detach the per-run hooks, even if the search raises.
+        ArxivSearchTool.progress = None
+        arxiv_logger.removeHandler(retry_reporter)
+
     paper_count = len(search_papers)
 
     if not search_papers:
@@ -74,14 +107,42 @@ def _run_search(run_id, date, categories, event_queue):
 
 
 def _run_evaluation(run_id, search_task, event_queue):
-    """Stage B: Evaluate papers on novelty, impact, practicality + rank."""
+    """Stage B: Evaluate papers on novelty, impact, practicality + rank.
+
+    Emits a per-evaluator event sequence so the dashboard shows each evaluator
+    light up in turn — instead of one opaque "Evaluation Pipeline" spinner
+    through the longest stage. Uses CrewAI's per-task `callback` (documented
+    API), not the internal event bus.
+    """
     logger.info(f"[{run_id}] Stage B: Starting evaluation")
-    emit_event(event_queue, "agent_start", agent="Evaluation Pipeline", stage="evaluation")
 
     novelty_task = make_novelty_task(search_task)
     impact_task = make_impact_task(search_task)
     practical_task = make_practical_task(search_task)
     ranking_task = make_ranking_task(novelty_task, impact_task, practical_task)
+
+    # The four evaluators run sequentially. Each task's callback fires on
+    # completion, so we mark it done and start the next one — giving the
+    # frontend a live card-by-card animation using the existing event types.
+    # (The dynamic stepper builds a card per agent name, so no frontend change.)
+    sequence = [
+        (novelty_task, "Novelty Evaluator", "Impact Evaluator"),
+        (impact_task, "Impact Evaluator", "Practicality Evaluator"),
+        (practical_task, "Practicality Evaluator", "Ranking Synthesizer"),
+        (ranking_task, "Ranking Synthesizer", None),
+    ]
+    for task, name, next_name in sequence:
+        def make_callback(name=name, next_name=next_name):
+            def on_complete(_output):
+                logger.info(f"[{run_id}] Stage B: {name} complete")
+                emit_event(event_queue, "agent_complete", agent=name, summary=f"{name} done")
+                if next_name:
+                    emit_event(event_queue, "agent_start", agent=next_name, stage="evaluation")
+            return on_complete
+        task.callback = make_callback()
+
+    # Light up the first evaluator before the crew starts.
+    emit_event(event_queue, "agent_start", agent="Novelty Evaluator", stage="evaluation")
 
     eval_crew = Crew(
         agents=[
@@ -97,12 +158,6 @@ def _run_evaluation(run_id, search_task, event_queue):
     eval_result = eval_crew.kickoff()
 
     logger.info(f"[{run_id}] Stage B: Evaluation complete")
-    emit_event(
-        event_queue, "agent_complete",
-        agent="Evaluation Pipeline",
-        summary="All evaluations and ranking complete",
-    )
-
     return eval_result, novelty_task, impact_task, practical_task
 
 
