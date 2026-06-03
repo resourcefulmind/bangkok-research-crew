@@ -1,6 +1,5 @@
 from crewai import Task
 from .agents import (
-    search_agent,
     novelty_evaluator,
     impact_evaluator,
     practical_evaluator,
@@ -9,35 +8,17 @@ from .agents import (
 from .models import RankingResult
 
 
-# Task 1 - Search Arxiv for papers
-def make_search_task() -> Task:
-    return Task(
-        description=(
-            "Search ArXiv for research papers published on {date}. "
-            "Call the arxiv_search tool EXACTLY ONCE with this input: "
-            "'{date}, {categories}' — the tool handles combining categories "
-            "internally. Do NOT make separate calls per category. "
-            "Return whatever the tool finds. Do not evaluate or filter papers."
-        ),
-        expected_output=(
-            "A complete list of all papers found, where each paper includes: "
-            "title, authors, abstract, ArXiv URL, PDF link, and categories. "
-            "Also include the total number of papers found."
-        ),
-        agent=search_agent,
-    )
-
-
-# Task 2 - Evaluate Novelty of Papers
-def make_novelty_task(search_task: Task) -> Task:
+# Task 1 - Evaluate Novelty of Papers
+def make_novelty_task(papers_text: str) -> Task:
     description = (
-        "Evaluate each paper from the search results on its NOVELTY only. "
+        "Evaluate each paper listed below on its NOVELTY only. "
         "For each paper, assess: Has this specific approach been done before? "
         "If similar work exists, how is this fundamentally different? Does it "
         "challenge an existing assumption in the field? Could other researchers "
         "build on this in surprising ways? Assign a novelty score from 1 to 10 "
         "where 1 is purely incremental and 10 is a groundbreaking new idea. "
         "Provide 1-2 sentences of reasoning for each score."
+        f"\n\nPAPERS:\n{papers_text}"
     )
 
     return Task(
@@ -48,14 +29,13 @@ def make_novelty_task(search_task: Task) -> Task:
             "(8-10), Significant (5-7), Incremental (1-4)."
         ),
         agent=novelty_evaluator,
-        context=[search_task],
     )
 
 
-# Task 3 - Evaluate Impact of Papers
-def make_impact_task(search_task: Task) -> Task:
+# Task 2 - Evaluate Impact of Papers
+def make_impact_task(papers_text: str) -> Task:
     description = (
-        "Evaluate each paper from the search results on its IMPACT and "
+        "Evaluate each paper listed below on its IMPACT and "
         "RIGOR only. For each paper, assess these four dimensions: SCALE — "
         "how many datasets, tasks, or domains were evaluated? RIGOR — is "
         "there mention of ablation studies, error bars, or statistical "
@@ -65,6 +45,7 @@ def make_impact_task(search_task: Task) -> Task:
         "Assign an impact score from 1 to 10 where 1 is minimal validation "
         "and 10 is comprehensive, field-defining work. Provide 1-2 sentences "
         "of reasoning for each score."
+        f"\n\nPAPERS:\n{papers_text}"
     )
 
     return Task(
@@ -75,14 +56,13 @@ def make_impact_task(search_task: Task) -> Task:
             "(8-10), Solid validation (5-7), Limited validation (1-4)."
         ),
         agent=impact_evaluator,
-        context=[search_task],
     )
 
 
-# Task 4 - Evaluate Practical Relevance of Papers
-def make_practical_task(search_task: Task) -> Task:
+# Task 3 - Evaluate Practical Relevance of Papers
+def make_practical_task(papers_text: str) -> Task:
     description = (
-        "Evaluate each paper from the search results on its PRACTICAL "
+        "Evaluate each paper listed below on its PRACTICAL "
         "APPLICABILITY only. For each paper, assess these five dimensions: "
         "PROBLEM RELEVANCE — does this solve a real problem practitioners "
         "care about? DEPLOYMENT READINESS — could someone implement this in "
@@ -92,6 +72,7 @@ def make_practical_task(search_task: Task) -> Task:
         "specific task shown in the paper? Assign a practicality score from "
         "1 to 10 where 1 is purely academic and 10 is immediately deployable. "
         "Provide 1-2 sentences of reasoning for each score."
+        f"\n\nPAPERS:\n{papers_text}"
     )
 
     return Task(
@@ -102,11 +83,10 @@ def make_practical_task(search_task: Task) -> Task:
             "useful (8-10), Moderately applicable (5-7), Primarily academic (1-4)."
         ),
         agent=practical_evaluator,
-        context=[search_task],
     )
 
 
-# Task 5 - Rank the Papers
+# Task 4 - Rank the Papers
 def make_ranking_task(
     novelty_task: Task,
     impact_task: Task,

@@ -1,7 +1,7 @@
 import queue 
 import threading 
 from unittest.mock import patch, MagicMock 
-from bangkok.pipeline import run_pipeline
+from bangkok.pipeline import run_pipeline, _run_search
 from bangkok.models import RankedPaperSummary, RankingResult, RankedPaper
 from bangkok.render import render_report_string
 
@@ -203,3 +203,38 @@ def test_empty_search_results_produces_error_event():
 
     error_event = next(e for e in events if e["type"] == "error")
     assert "No papers" in error_event["message"]
+
+
+def test_search_runs_without_an_llm_crew():
+    """Search is now a direct tool call — no CrewAI crew/LLM for discovery.
+
+    Guards the de-LLM refactor: _run_search should instantiate the tool and
+    build the evaluator text itself, and never construct a Crew.
+    """
+    event_queue = queue.Queue()
+    fake_papers = _make_fake_search_papers()
+
+    with patch("bangkok.pipeline.Crew") as MockCrew, \
+         patch("bangkok.pipeline.ArxivSearchTool") as MockTool:
+
+        MockTool.last_results = fake_papers
+
+        papers_text, search_papers = _run_search(
+            run_id="t",
+            date="2026-04-15",
+            categories="cs.AI",
+            event_queue=event_queue,
+        )
+
+    # The tool was called directly; NO Crew (i.e. no LLM) was built for search.
+    MockTool.assert_called_once()
+    MockCrew.assert_not_called()
+
+    assert search_papers == fake_papers
+    assert "Test Paper 1" in papers_text          # formatted for the evaluators
+
+    event_types = []
+    while not event_queue.empty():
+        event_types.append(event_queue.get_nowait()["type"])
+    assert event_types[0] == "agent_start"
+    assert "agent_complete" in event_types

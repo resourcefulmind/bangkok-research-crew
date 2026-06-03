@@ -2,14 +2,13 @@ import argparse
 from dotenv import load_dotenv
 from crewai import Crew, Process
 from bangkok.tasks import (
-    make_search_task,
     make_novelty_task,
     make_impact_task,
     make_practical_task,
     make_ranking_task,
 )
 from bangkok.models import merge_rankings_with_search
-from bangkok.tools import ArxivSearchTool
+from bangkok.tools import ArxivSearchTool, format_papers_for_eval
 from bangkok.render import render_report
 
 load_dotenv()
@@ -39,43 +38,42 @@ def main():
     print(f"\nSearching ArXiv for papers on {args.date}")
     print(f"Categories: {categories_str}\n")
 
-    # Build tasks using factory functions — fresh instances per run
-    search_task = make_search_task()
-    novelty_task = make_novelty_task(search_task)
-    impact_task = make_impact_task(search_task)
-    practical_task = make_practical_task(search_task)
+    # Search is deterministic data-fetching — call the tool directly, no LLM.
+    ArxivSearchTool()._run(f"{args.date}, {categories_str}")
+    search_papers = ArxivSearchTool.last_results
+    if not search_papers:
+        print(
+            "No papers found. ArXiv may be unavailable, or there were no "
+            "submissions that day — try a recent weekday."
+        )
+        return
+    print(f"Found {len(search_papers)} papers.\n")
+
+    papers_text = format_papers_for_eval(search_papers)
+
+    # Build the evaluation tasks (fresh instances per run)
+    novelty_task = make_novelty_task(papers_text)
+    impact_task = make_impact_task(papers_text)
+    practical_task = make_practical_task(papers_text)
     ranking_task = make_ranking_task(novelty_task, impact_task, practical_task)
 
-    # Build the crew
     crew = Crew(
         agents=[
-            search_task.agent,
             novelty_task.agent,
             impact_task.agent,
             practical_task.agent,
             ranking_task.agent,
         ],
-        tasks=[
-            search_task,
-            novelty_task,
-            impact_task,
-            practical_task,
-            ranking_task,
-        ],
+        tasks=[novelty_task, impact_task, practical_task, ranking_task],
         process=Process.sequential,
         verbose=True,
     )
 
-    # Run the crew
-    result = crew.kickoff(
-        inputs={
-            "date": args.date,
-            "categories": categories_str,
-        }
-    )
+    # No inputs: papers are embedded in the task descriptions, and we don't
+    # want CrewAI re-interpolating braces that can appear in abstracts.
+    result = crew.kickoff()
 
     # Merge ranking scores with original search metadata
-    search_papers = ArxivSearchTool.last_results
     ranked_papers = merge_rankings_with_search(result.pydantic.papers, search_papers)
 
     # Render the report

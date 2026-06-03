@@ -4,14 +4,13 @@ import threading
 from crewai import Crew, Process
 
 from .tasks import (
-    make_search_task,
     make_novelty_task,
     make_impact_task,
     make_practical_task,
     make_ranking_task,
 )
 from .models import merge_rankings_with_search
-from .tools import ArxivSearchTool
+from .tools import ArxivSearchTool, format_papers_for_eval
 from .render import render_report_string
 
 logging.basicConfig(
@@ -74,14 +73,9 @@ def _run_search(run_id, date, categories, event_queue):
     arxiv_logger.addHandler(retry_reporter)
 
     try:
-        search_task = make_search_task()
-        search_crew = Crew(
-            agents=[search_task.agent],
-            tasks=[search_task],
-            process=Process.sequential,
-            verbose=True,
-        )
-        search_crew.kickoff(inputs={"date": date, "categories": categories})
+        # Search is deterministic data-fetching — call the tool directly, no
+        # CrewAI agent/LLM. The tool stores its results on .last_results.
+        ArxivSearchTool()._run(f"{date}, {categories}")
         search_papers = ArxivSearchTool.last_results
     finally:
         # Always detach the per-run hooks, even if the search raises.
@@ -103,10 +97,11 @@ def _run_search(run_id, date, categories, event_queue):
         summary=f"Found {paper_count} papers for {date} in {categories}",
     )
 
-    return search_task, search_papers
+    papers_text = format_papers_for_eval(search_papers)
+    return papers_text, search_papers
 
 
-def _run_evaluation(run_id, search_task, event_queue):
+def _run_evaluation(run_id, papers_text, event_queue):
     """Stage B: Evaluate papers on novelty, impact, practicality + rank.
 
     Emits a per-evaluator event sequence so the dashboard shows each evaluator
@@ -116,9 +111,9 @@ def _run_evaluation(run_id, search_task, event_queue):
     """
     logger.info(f"[{run_id}] Stage B: Starting evaluation")
 
-    novelty_task = make_novelty_task(search_task)
-    impact_task = make_impact_task(search_task)
-    practical_task = make_practical_task(search_task)
+    novelty_task = make_novelty_task(papers_text)
+    impact_task = make_impact_task(papers_text)
+    practical_task = make_practical_task(papers_text)
     ranking_task = make_ranking_task(novelty_task, impact_task, practical_task)
 
     # The four evaluators run sequentially. Each task's callback fires on
@@ -279,11 +274,11 @@ def run_pipeline(
     - run_state: shared dict where we store the final report HTML
     """
     try:
-        search_task, search_papers = _run_search(
+        papers_text, search_papers = _run_search(
             run_id, date, categories, event_queue
         )
         eval_result, novelty_task, impact_task, practical_task = _run_evaluation(
-            run_id, search_task, event_queue
+            run_id, papers_text, event_queue
         )
         ranking_result = _run_feedback_checkpoint(
             run_id, eval_result, novelty_task, impact_task, practical_task,

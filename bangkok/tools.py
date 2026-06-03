@@ -4,6 +4,27 @@ import arxiv
 from crewai.tools import BaseTool
 
 
+def format_papers_for_eval(papers: list[dict]) -> str:
+    """Format the search results as a text block for the evaluator prompts.
+
+    This is the data the novelty/impact/practicality evaluators read. Pulled
+    out of the tool so the pipeline can build it directly from the paper list
+    (no LLM round-trip needed to relay the search results).
+    """
+    blocks = [f"Found {len(papers)} papers.\n"]
+    for i, p in enumerate(papers, 1):
+        blocks.append(
+            f"Paper {i}:\n"
+            f"  Title: {p['title']}\n"
+            f"  Authors: {p['authors']}\n"
+            f"  Abstract: {p['abstract'][:500]}\n"
+            f"  ArXiv URL: {p['arxiv_url']}\n"
+            f"  PDF URL: {p['pdf_url']}\n"
+            f"  Categories: {p['categories']}\n"
+        )
+    return "\n".join(blocks)
+
+
 class ArxivSearchTool(BaseTool):
     name: str = "arxiv_search"
     description: str = (
@@ -82,17 +103,4 @@ class ArxivSearchTool(BaseTool):
         if not papers:
             return f"No papers found for query: {full_query}"
 
-        output = f"Found {len(papers)} papers for {date_str} in categories: {', '.join(categories)}\n\n"
-        for i, p in enumerate(papers, 1):
-            output += (
-                f"Paper {i}:\n"
-                f"  Title: {p['title']}\n"
-                f"  Authors: {p['authors']}\n"
-                f"  Abstract: {p['abstract'][:500]}\n"
-                f"  ArXiv URL: {p['arxiv_url']}\n"
-                f"  PDF URL: {p['pdf_url']}\n"
-                f"  Categories: {p['categories']}\n"
-                f"  Published: {p['published']}\n\n"
-            )
-
-        return output
+        return format_papers_for_eval(papers)
