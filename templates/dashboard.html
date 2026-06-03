@@ -399,11 +399,13 @@
                     state.finished = true;
                     if (state.source) state.source.close();
                     showError("Run aborted" + (event.reason ? ": " + event.reason : "."));
+                    showScreen("start");   // leave the running view; banner explains why
                     break;
                 case "error":
                     state.finished = true;
                     if (state.source) state.source.close();
                     showError(event.message || "The pipeline hit an error.");
+                    showScreen("start");   // leave the running view; banner explains why
                     break;
             }
         }
@@ -430,6 +432,12 @@
         startForm.addEventListener("submit", async (event) => {
             event.preventDefault();               // don't let the browser do a full-page form POST
             runButton.disabled = true;            // prevent double-submits while the request is in flight
+
+            // Clear any state left over from a previous (failed) run.
+            document.getElementById("error-banner").hidden = true;
+            document.getElementById("stepper").innerHTML = "";
+            Object.keys(cards).forEach((k) => delete cards[k]);
+            state.finished = false;
 
             const date = document.getElementById("date").value;
             const categories = Array.from(
