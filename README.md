@@ -47,8 +47,6 @@ python main.py --date 2026-05-28
 
 The CLI writes its report to `output/report.html`. The dashboard serves it in the browser.
 
-> On macOS, the AirPlay Receiver also sits on port 5000. If the page won't load, turn AirPlay Receiver off (System Settings → General → AirDrop & Handoff), or change the port in `app.py`.
-
 ## How it works
 
 A run moves through three stages.
