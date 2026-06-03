@@ -1,41 +1,13 @@
-import os 
+import os
 from dotenv import load_dotenv
 from crewai import Agent, LLM
-from tools import ArxivSearchTool
 
 load_dotenv()
 
-# Set up the LLM (Claude Sonnet via Anthropic API) 
-llm = LLM(model="anthropic/claude-sonnet-4-6") 
-arxiv_tool = ArxivSearchTool()
+# Set up the LLM — model configurable via LLM_MODEL env var
+llm = LLM(model=os.getenv("LLM_MODEL", "anthropic/claude-sonnet-4-6")) 
 
-# Agent 1 - Search Arxiv for papers
-search_agent = Agent(                  
-    role="ArXiv Research Specialist",                                                                                                                                                                                                         
-    goal="Find all research papers published on ArXiv for a given date within "                                                                                                                                                               
-        "the specified subject categories, returning complete metadata for "                                                                                                                                                                 
-        "every paper found",                                                                                                                                                                                                                 
-    backstory=(                                                                                                                                                                                                                               
-        "You are an expert at navigating academic databases with 10+ years of "                                                                                                                                                               
-        "experience searching ArXiv. You have deep knowledge of ArXiv's full "                                                                                                                                                                
-        "category taxonomy spanning physics, mathematics, computer science, "                                                                                                                                                                 
-        "quantitative biology, quantitative finance, statistics, electrical "
-        "engineering and systems science, and economics. You specialize in "                                                                                                                                                                  
-        "finding and collecting research papers systematically across any "
-        "combination of these fields, ensuring no important paper is missed. "                                                                                                                                                                
-        "You can cross-reference papers across categories since many papers "                                                                                                                                                                 
-        "are listed in multiple fields. You are methodical and detail-oriented "                                                                                                                                                              
-        "— you report exactly what was found without over-interpretation. For "                                                                                                                                                               
-        "each paper you return the title, authors, abstract, ArXiv URL, PDF "                                                                                                                                                                 
-        "link, and categories. Your job is to find papers, not to evaluate "
-        "them. Evaluation is for others."                                                                                                                                                                                                     
-    ),                                 
-    tools=[arxiv_tool],                                                                                                                                                                                                                       
-    llm=llm,    
-    verbose=True,                                                                                                                                                                                                                             
-) 
-
-# Agent 2 - Novelty Evaluator
+# Agent 1 - Novelty Evaluator
 novelty_evaluator = Agent(                                                                                                                                                                                                                    
     role="AI Novelty Analyst",
     goal="Evaluate each research paper on how novel and original its core "                                                                                                                                                                   
@@ -59,7 +31,7 @@ novelty_evaluator = Agent(
     verbose=True,                                                                                                                                                                                                                             
 )
 
-# Agent 3 - Impact Evaluator
+# Agent 2 - Impact Evaluator
 impact_evaluator = Agent( 
     role="Research Impact Analyst",                                                                                                                                                                                                           
     goal="Evaluate each research paper on its experimental rigor, scale of "                                                                                                                                                                  
@@ -83,7 +55,7 @@ impact_evaluator = Agent(
     verbose=True,                                                                                                                                                                                                                             
 )                                                                                                                                                                                                                                             
 
-# Agent 4 - Practical Evaluator: 
+# Agent 3 - Practical Evaluator: 
 practical_evaluator = Agent(
     role="Applied Research Specialist",                                                                                                                                                                                                       
     goal="Evaluate each research paper on its real-world usefulness, "
@@ -107,7 +79,7 @@ practical_evaluator = Agent(
     verbose=True,                                                                                                                                                                                                                             
 )
 
-# Agent 5 - Ranking Synthesizer
+# Agent 4 - Ranking Synthesizer
 ranking_synthesizer = Agent(                                                                                                                                                                                                                  
     role="Research Ranking Synthesizer",
     goal="Combine novelty, impact, and practical evaluations into a final "                                                                                                                                                                   

@@ -1,0 +1,60 @@
+{# Shared design tokens — included inside the <style> block of report.html and dashboard.html.
+   Single source of truth for colors, shadows, and dark-mode palette.
+   Raw CSS only (no <style> wrapper) — the include lands inside an existing <style> tag. #}
+:root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f7;
+    --bg-card: #ffffff;
+    --bg-card-hover: #fafafa;
+    --border: #e5e5e7;
+    --border-light: #f0f0f2;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --accent: #0066cc;
+    --accent-hover: #0055b3;
+    --accent-light: rgba(0, 102, 204, 0.08);
+    --accent-border: rgba(0, 102, 204, 0.2);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --score-bg: #f5f5f7;
+    --score-border: #e5e5e7;
+    --score-text: #1d1d1f;
+    --tag-bg: #f5f5f7;
+    --tag-border: #e5e5e7;
+    --hero-gradient: linear-gradient(135deg, #fbfbfd 0%, #f5f5f7 100%);
+    --danger-bg: #fff0f0;
+    --danger-text: #8a1f1f;
+    --danger-border: #f3c0c0;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #000000;
+        --bg-secondary: #1c1c1e;
+        --bg-card: #1c1c1e;
+        --bg-card-hover: #2c2c2e;
+        --border: #38383a;
+        --border-light: #2c2c2e;
+        --text-primary: #f5f5f7;
+        --text-secondary: #a1a1a6;
+        --text-tertiary: #86868b;
+        --accent: #2997ff;
+        --accent-hover: #40a0ff;
+        --accent-light: rgba(41, 151, 255, 0.1);
+        --accent-border: rgba(41, 151, 255, 0.25);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+        --score-bg: #2c2c2e;
+        --score-border: #38383a;
+        --score-text: #f5f5f7;
+        --tag-bg: #2c2c2e;
+        --tag-border: #38383a;
+        --hero-gradient: linear-gradient(135deg, #1c1c1e 0%, #000000 100%);
+        --danger-bg: rgba(255, 69, 58, 0.12);
+        --danger-text: #ff6b6b;
+        --danger-border: rgba(255, 69, 58, 0.3);
+    }
+}

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangkok Research Crew</title>
+    <style>
+        {% include "_tokens.html" %}
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            /* Render native controls (date icon, checkboxes, picker popup) in the
+               matching light/dark theme. color-scheme inherits to all inputs. */
+            color-scheme: light dark;
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        /* Screen switching: exactly one screen visible at a time.
+           The state machine (Step 4) toggles the `active` class. */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        /* Error banner lives outside the screens — an error can surface in any state. */
+        .error-banner {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            background: var(--danger-bg);
+            color: var(--danger-text);
+            border: 1px solid var(--danger-border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 0 auto 24px;
+            max-width: 820px;
+        }
+        .error-banner[hidden] { display: none; }
+
+        .title { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+        .subtitle { color: var(--text-secondary); margin: 6px 0 28px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .field-label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        input[type="date"] {
+            font: inherit;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+
+        .categories { border: 0; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 14px; }
+        .categories label { font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+        input[type="checkbox"] { cursor: pointer; }
+
+        .btn-primary {
+            font: inherit;
+            font-weight: 600;
+            color: #fff;
+            background: var(--accent);
+            border: 0;
+            border-radius: 999px;
+            padding: 11px 26px;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+        .stepper { list-style: none; margin-top: 28px; display: flex; flex-direction: column; gap: 12px; }
+
+        .step {
+            display: flex; align-items: center; gap: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+        .step.active, .step.done { opacity: 1; }
+
+        .step-icon {
+            width: 18px; height: 18px; flex-shrink: 0;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .step.active .step-icon {
+            border-color: var(--accent);
+            border-top-color: transparent;
+            animation: spin 0.7s linear infinite;
+        }
+        .step.done .step-icon {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+        .step.done .step-icon::after { content: "✓"; color: #fff; font-size: 11px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .step-label { font-weight: 600; }
+        .step-summary { color: var(--text-secondary); font-size: 14px; margin-left: auto; }
+
+        .feedback-list { list-style: none; margin: 24px 0; display: flex; flex-direction: column; gap: 8px; }
+        .feedback-item {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 16px;
+        }
+        .fb-rank { font-weight: 700; color: var(--text-tertiary); width: 32px; flex-shrink: 0; }
+        .fb-title { flex: 1; }
+        .fb-score { font-weight: 600; color: var(--accent); flex-shrink: 0; }
+
+        .feedback-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-secondary, .btn-danger {
+            font: inherit; font-weight: 600; border-radius: 999px;
+            padding: 11px 26px; cursor: pointer;
+            border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);
+        }
+        .btn-secondary:hover { background: var(--bg-card-hover); }
+        .btn-danger { color: var(--danger-text); border-color: var(--danger-border); background: var(--danger-bg); }
+
+        .adjust-box { margin-top: 18px; }
+        .adjust-box textarea {
+            width: 100%; font: inherit; padding: 10px 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            background: var(--bg); color: var(--text-primary);
+            margin-bottom: 12px; resize: vertical;
+        }
+
+        .report-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .report-done { font-weight: 600; margin-right: auto; }
+        .report-frame {
+            width: 100%; height: 80vh;
+            border: 1px solid var(--border); border-radius: 12px;
+            background: var(--bg);
+        }
+    </style>
+</head>
+<body>
+    <div id="error-banner" class="error-banner" role="alert" hidden>
+        <span id="error-message"></span>
+        <button id="btn-start-over" class="btn-secondary" type="button">Start over</button>
+    </div>
+
+    <main class="container">
+        <!-- State 1: start screen (date, categories, run button) -->
+        <section id="screen-start" class="screen active">
+            <h1 class="title">Bangkok Research Crew</h1>
+            <p class="subtitle">Find and rank the day's top AI papers from ArXiv.</p>
+
+            <form id="start-form" class="card">
+                <label class="field-label" for="date">Date</label>
+                <input type="date" id="date" name="date" required>
+
+                <fieldset class="categories">
+                    <legend class="field-label">Categories</legend>
+                    <label><input type="checkbox" name="category" value="cs.AI" checked> cs.AI</label>
+                    <label><input type="checkbox" name="category" value="cs.LG" checked> cs.LG</label>
+                    <label><input type="checkbox" name="category" value="cs.CL" checked> cs.CL</label>
+                    <label><input type="checkbox" name="category" value="cs.CV" checked> cs.CV</label>
+                    <label><input type="checkbox" name="category" value="stat.ML" checked> stat.ML</label>
+                </fieldset>
+
+                <button type="submit" class="btn-primary">Run</button>
+            </form>
+        </section>
+
+        <!-- State 2: pipeline running (stepper built dynamically from events) -->
+        <section id="screen-running" class="screen" aria-live="polite">
+            <h1 class="title">Working…</h1>
+            <p class="subtitle">Watching the pipeline run. This takes a minute or two.</p>
+            <ol id="stepper" class="stepper"></ol>
+        </section>
+
+        <!-- State 3: feedback checkpoint (top 10 + approve/adjust/abort) -->
+        <section id="screen-feedback" class="screen">
+            <h1 class="title">Review the ranking</h1>
+            <p class="subtitle">Approve to generate the report, adjust to re-rank with guidance, or abort.</p>
+
+            <ol id="feedback-list" class="feedback-list"></ol>
+
+            <div class="feedback-actions">
+                <button id="btn-approve" class="btn-primary" type="button">Approve</button>
+                <button id="btn-adjust" class="btn-secondary" type="button">Adjust</button>
+                <button id="btn-abort" class="btn-danger" type="button">Abort after this step</button>
+            </div>
+
+            <div id="adjust-box" class="adjust-box" hidden>
+                <label class="field-label" for="adjust-message">What should change?</label>
+                <textarea id="adjust-message" rows="3"></textarea>
+                <button id="btn-adjust-submit" class="btn-primary" type="button">Re-rank with this guidance</button>
+            </div>
+        </section>
+
+        <!-- State 4: final report (embedded as an isolated document) -->
+        <section id="screen-report" class="screen">
+            <div class="report-bar">
+                <span class="report-done">Report ready ✓</span>
+                <a id="report-open" class="btn-secondary" href="#" target="_blank" rel="noopener">Open in new tab</a>
+                <button id="btn-new-run" class="btn-secondary" type="button">New run</button>
+            </div>
+            <iframe id="report-frame" class="report-frame" title="Research report"></iframe>
+        </section>
+    </main>
+
+    <script>
+        // ── State machine ───────────────────────────────────────────────
+        // One source of truth for "which screen is visible." Every transition
+        // goes through showScreen(): clear all, activate one. No DOM creation.
+        const state = { runId: null };
+
+        function showScreen(name) {
+            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+            document.getElementById("screen-" + name).classList.add("active");
+        }
+
+        function showError(message) {
+            document.getElementById("error-message").textContent = message;
+            document.getElementById("error-banner").hidden = false;
+        }
+
+        document.getElementById("btn-start-over").addEventListener("click", () => {
+            window.location.href = "/";
+        });
+
+        // ── SSE: connect to the live event stream ───────────────────────
+        function connectStream(runId) {
+            const source = new EventSource("/stream/" + runId);
+            state.source = source;
+
+            source.onmessage = (e) => {
+                const event = JSON.parse(e.data);
+                handleEvent(event);
+            };
+
+            source.onerror = () => {
+                // The server closes the stream after a terminal event; that surfaces
+                // here as an error too, so only complain if we didn't finish cleanly.
+                if (source.readyState === EventSource.CLOSED && !state.finished) {
+                    showError("Lost connection to the server.");
+                }
+            };
+        }
+
+        // ── Progress stepper (built dynamically from agent events) ──────
+        const cards = {};  // agent name -> <li> element
+
+        function ensureCard(agent) {
+            if (!cards[agent]) {
+                const li = document.createElement("li");
+                li.className = "step";
+                li.innerHTML = '<span class="step-icon"></span>'
+                             + '<span class="step-label"></span>'
+                             + '<span class="step-summary"></span>';
+                li.querySelector(".step-label").textContent = agent;  // textContent = XSS-safe
+                document.getElementById("stepper").appendChild(li);
+                cards[agent] = li;
+            }
+            return cards[agent];
+        }
+
+        function agentStart(agent) {
+            const li = ensureCard(agent);
+            li.classList.remove("done");
+            li.classList.add("active");
+        }
+
+        function agentComplete(agent, summary) {
+            const li = ensureCard(agent);
+            li.classList.remove("active");
+            li.classList.add("done");
+            if (summary) li.querySelector(".step-summary").textContent = summary;
+        }
+
+        function agentProgress(agent, message) {
+            // Live status on the active card (e.g. "Querying arXiv…") — does not
+            // change the spinner/done state, just updates the summary line.
+            const li = ensureCard(agent);
+            if (message) li.querySelector(".step-summary").textContent = message;
+        }
+
+        // ── Feedback checkpoint ─────────────────────────────────────────
+        function renderFeedback(papers) {
+            const list = document.getElementById("feedback-list");
+            list.innerHTML = "";
+            papers.forEach((p) => {
+                const li = document.createElement("li");
+                li.className = "feedback-item";
+
+                const rank = document.createElement("span");
+                rank.className = "fb-rank";
+                rank.textContent = "#" + p.rank;
+
+                const title = document.createElement("span");
+                title.className = "fb-title";
+                title.textContent = p.title;                 // textContent = XSS-safe
+
+                const score = document.createElement("span");
+                score.className = "fb-score";
+                score.textContent = Number(p.composite_score).toFixed(1);
+
+                li.append(rank, title, score);
+                list.appendChild(li);
+            });
+            document.getElementById("adjust-box").hidden = true;  // reset on each (re)render
+            document.getElementById("btn-approve").focus();       // move focus into the panel
+        }
+
+        async function sendFeedback(action, message) {
+            try {
+                const res = await fetch("/feedback/" + state.runId, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: action, message: message || "" }),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showError(err.error || "Could not submit feedback.");
+                    return;
+                }
+                // approve → render continues; adjust → re-ranking runs; both show progress again.
+                // abort → we wait for the 'aborted' event to surface the message.
+                if (action !== "abort") showScreen("running");
+            } catch (e) {
+                showError("Network error submitting feedback.");
+            }
+        }
+
+        document.getElementById("btn-approve").addEventListener("click", () => sendFeedback("approve"));
+        document.getElementById("btn-abort").addEventListener("click", () => sendFeedback("abort"));
+        document.getElementById("btn-adjust").addEventListener("click", () => {
+            document.getElementById("adjust-box").hidden = false;
+            document.getElementById("adjust-message").focus();
+        });
+        document.getElementById("btn-adjust-submit").addEventListener("click", () => {
+            const msg = document.getElementById("adjust-message").value.trim();
+            sendFeedback("adjust", msg);
+        });
+
+        // ── Report view ─────────────────────────────────────────────────
+        function showReport(reportUrl) {
+            const frame = document.getElementById("report-frame");
+            frame.src = reportUrl;                                  // iframe loads it as its own document
+            document.getElementById("report-open").href = reportUrl;
+            showScreen("report");
+        }
+
+        document.getElementById("btn-new-run").addEventListener("click", () => {
+            window.location.href = "/";   // fresh dashboard, clears the run_id hash
+        });
+
+        // ── Route each event to the right handler ────────────────────────
+        function handleEvent(event) {
+            switch (event.type) {
+                case "agent_start":
+                    agentStart(event.agent);
+                    break;
+                case "agent_complete":
+                    agentComplete(event.agent, event.summary);
+                    break;
+                case "agent_progress":
+                    agentProgress(event.agent, event.message);
+                    break;
+                case "feedback_requested":
+                    showScreen("feedback");
+                    renderFeedback(event.top_papers || []);
+                    break;
+                case "complete":
+                    state.finished = true;
+                    if (state.source) state.source.close();
+                    showReport(event.report_url);
+                    break;
+                case "aborted":
+                    state.finished = true;
+                    if (state.source) state.source.close();
+                    showError("Run aborted" + (event.reason ? ": " + event.reason : "."));
+                    showScreen("start");   // leave the running view; banner explains why
+                    break;
+                case "error":
+                    state.finished = true;
+                    if (state.source) state.source.close();
+                    showError(event.message || "The pipeline hit an error.");
+                    showScreen("start");   // leave the running view; banner explains why
+                    break;
+            }
+        }
+
+        // ── Start screen → POST /run ─────────────────────────────────────
+        const startForm = document.getElementById("start-form");
+        const runButton = startForm.querySelector(".btn-primary");
+
+        // Date picker UX: cap at today (ArXiv has no papers for future dates),
+        // and open the calendar on a click anywhere in the field — not just the icon.
+        const dateInput = document.getElementById("date");
+        const now = new Date();
+        dateInput.max = [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, "0"),
+            String(now.getDate()).padStart(2, "0"),
+        ].join("-");
+        dateInput.addEventListener("click", () => {
+            if (typeof dateInput.showPicker === "function") {
+                try { dateInput.showPicker(); } catch (e) { /* ignore — needs a user gesture */ }
+            }
+        });
+
+        startForm.addEventListener("submit", async (event) => {
+            event.preventDefault();               // don't let the browser do a full-page form POST
+            runButton.disabled = true;            // prevent double-submits while the request is in flight
+
+            // Clear any state left over from a previous (failed) run.
+            document.getElementById("error-banner").hidden = true;
+            document.getElementById("stepper").innerHTML = "";
+            Object.keys(cards).forEach((k) => delete cards[k]);
+            state.finished = false;
+
+            const date = document.getElementById("date").value;
+            const categories = Array.from(
+                document.querySelectorAll('input[name="category"]:checked')
+            ).map(c => c.value).join(", ");
+
+            try {
+                const res = await fetch("/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ date, categories }),
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    showError(err.error || "Could not start the run.");
+                    runButton.disabled = false;
+                    return;
+                }
+
+                const data = await res.json();
+                state.runId = data.run_id;
+                window.location.hash = data.run_id;   // run_id in URL (locked decision)
+                showScreen("running");
+                connectStream(data.run_id);           // open the live SSE stream
+            } catch (e) {
+                showError("Network error — is the server running?");
+                runButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
