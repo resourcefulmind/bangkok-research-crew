@@ -92,15 +92,16 @@ def make_ranking_task(
     impact_task: Task,
     practical_task: Task,
     feedback: str = "",
+    top_n: int = 10,
 ) -> Task:
     description = (
         "Using the novelty, impact, and practicality evaluations from the "
-        "three specialist evaluators, produce a final ranking of the top 10 "
+        f"three specialist evaluators, produce a final ranking of the top {top_n} "
         "most important papers. For each paper, calculate a composite score "
         "by weighing novelty, impact, and practicality roughly equally. When "
         "evaluators disagree — for example, high novelty but low practicality "
         "— explain the trade-off and justify your ranking decision. "
-        "For each paper in the top 10, provide: the final rank (1-10), "
+        f"For each paper in the top {top_n}, provide: the final rank (1-{top_n}), "
         "the exact paper title, composite score out of 10, the individual "
         "novelty score, impact score, and practicality score, and a 2-3 "
         "sentence rationale explaining why it earned its position."
@@ -111,7 +112,7 @@ def make_ranking_task(
     return Task(
         description=description,
         expected_output=(
-            "A ranked list of the top 10 papers. Each entry includes: rank, "
+            f"A ranked list of the top {top_n} papers. Each entry includes: rank, "
             "title, composite score (out of 10), individual novelty/impact/"
             "practicality scores, and a clear ranking rationale."
         ),

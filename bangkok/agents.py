@@ -83,7 +83,7 @@ practical_evaluator = Agent(
 ranking_synthesizer = Agent(                                                                                                                                                                                                                  
     role="Research Ranking Synthesizer",
     goal="Combine novelty, impact, and practical evaluations into a final "                                                                                                                                                                   
-        "ranked list of the top 10 most important research papers of the day",
+        "ranked list of the most important research papers of the day",
     backstory=(                                                                                                                                                                                                                               
         "You are a meta-researcher who synthesizes evaluations from specialists "
         "into actionable rankings. You have worked with diverse research teams "                                                                                                                                                              
@@ -97,7 +97,7 @@ ranking_synthesizer = Agent(
         "paper A is better but practicality says paper B is better — you "                                                                                                                                                                    
         "investigate the trade-off and make a reasoned call. You weight novelty, "
         "impact, and practicality roughly equally unless one signal is "                                                                                                                                                                      
-        "overwhelmingly strong. For each paper in your top 10, you provide: "                                                                                                                                                                 
+        "overwhelmingly strong. For each paper in your ranking, you provide: "                                                                                                                                                                 
         "a composite score out of 10, the individual novelty, impact, and "                                                                                                                                                                   
         "practicality scores, and a clear explanation of why it earned its rank."                                                                                                                                                             
     ),                                                                                                                                                                                                                                        

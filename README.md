@@ -16,7 +16,7 @@ Bangkok Research Crew
 ├── Pipeline
 │   ├── Search             direct arXiv query, no LLM
 │   ├── Evaluate           three agents: novelty, impact, practicality
-│   └── Rank               a fourth agent synthesizes a top 10
+│   └── Rank               a fourth agent synthesizes the top N (you pick 5 or 10)
 ├── Human-in-the-loop      one checkpoint, after ranking
 │   ├── Approve            render the report
 │   ├── Adjust             re-rank with a note from you
@@ -57,7 +57,7 @@ A run moves through three stages.
 
 **Evaluate.** Three agents each score every paper on one axis: novelty, impact, practicality. A fourth folds those into a ranked top ten. Splitting the judgment keeps each agent's job narrow, which keeps its scores legible. When something ranks high on novelty but low on practicality, you can see exactly why.
 
-**Review.** The run stops and waits for you. Approve, and it renders the report. Adjust, and it re-ranks with a note from you. Abort, and it ends. There's one checkpoint, and it sits here, after ranking, because that's the first moment you have something worth judging. (Your other real input is up front: the date and categories. Everything between is mechanical.)
+**Review.** The run stops and waits for you. Approve, and it renders the report. Adjust, and it re-ranks with a note from you. Abort, and it ends. There's one checkpoint, and it sits here, after ranking, because that's the first moment you have something worth judging. (Your other real input is up front, on the start screen: the date, which categories to search, and whether you want the top 5 or top 10. Everything between is mechanical.)
 
 The dashboard shows all of this as it happens using **server-sent events**, a one-way stream from the server to the page. The browser only needs to listen; it never pushes mid-run, so a full WebSocket is more machinery than the job needs. The pipeline runs on a background thread and pushes progress onto a queue, and the page reads from it. At the review step, the thread simply blocks until your answer comes back.
 
