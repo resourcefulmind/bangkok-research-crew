@@ -105,3 +105,12 @@ def test_report_returns_202_until_ready_then_html(client):
     assert ready.status_code == 200
     assert ready.mimetype == "text/html"
     assert "Top 10 papers" in ready.get_data(as_text=True)
+
+@patch("app.run_pipeline")
+def test_run_accepts_top_n_and_clamps_bad_values(mock_run_pipeline, client):
+    """POST /run accepts a valid top_n, and a bad one is clamped, not a crash."""
+    ok = client.post("/run", json={"date": "2026-05-28", "top_n": 5})
+    assert ok.status_code == 202
+
+    bad = client.post("/run", json={"date": "2026-05-28", "top_n": "banana"})
+    assert bad.status_code == 202   # clamped to default, no 400/500

@@ -78,6 +78,18 @@
         .categories label { font-size: 14px; color: var(--text-secondary); cursor: pointer; }
         input[type="checkbox"] { cursor: pointer; }
 
+        select {
+            font: inherit;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            cursor: pointer;
+            display: block;
+        }
+
         .btn-primary {
             font: inherit;
             font-weight: 600;
@@ -186,6 +198,12 @@
                     <label><input type="checkbox" name="category" value="stat.ML" checked> stat.ML</label>
                 </fieldset>
 
+                <label class="field-label" for="top-n">How many to rank</label>
+                <select id="top-n" name="top-n">
+                    <option value="10" selected>Top 10</option>
+                    <option value="5">Top 5</option>
+                </select>
+
                 <button type="submit" class="btn-primary">Run</button>
             </form>
         </section>
@@ -197,7 +215,7 @@
             <ol id="stepper" class="stepper"></ol>
         </section>
 
-        <!-- State 3: feedback checkpoint (top 10 + approve/adjust/abort) -->
+        <!-- State 3: feedback checkpoint (top N + approve/adjust/abort) -->
         <section id="screen-feedback" class="screen">
             <h1 class="title">Review the ranking</h1>
             <p class="subtitle">Approve to generate the report, adjust to re-rank with guidance, or abort.</p>
@@ -443,12 +461,13 @@
             const categories = Array.from(
                 document.querySelectorAll('input[name="category"]:checked')
             ).map(c => c.value).join(", ");
+            const topN = Number(document.getElementById("top-n").value);
 
             try {
                 const res = await fetch("/run", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ date, categories }),
+                    body: JSON.stringify({ date, categories, top_n: topN }),
                 });
 
                 if (!res.ok) {

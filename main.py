@@ -16,7 +16,7 @@ load_dotenv()
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Search ArXiv for AI research papers, rank the top 10 and generate a report"
+        description="Search ArXiv for AI research papers, rank the most important ones, and generate a report"
     )
     parser.add_argument(
         "--date",
@@ -30,6 +30,13 @@ def main():
         help="ArXiv categories to search (default: cs.AI cs.LG cs.CL cs.CV stat.ML)",
         nargs="+",
         default=["cs.AI", "cs.LG", "cs.CL", "cs.CV", "stat.ML"],
+    )
+    parser.add_argument(
+        "--top-n",
+        type=int,
+        choices=[5, 10],
+        default=10,
+        help="How many papers to rank (5 or 10, default 10)",
     )
     args = parser.parse_args()
 
@@ -55,7 +62,7 @@ def main():
     novelty_task = make_novelty_task(papers_text)
     impact_task = make_impact_task(papers_text)
     practical_task = make_practical_task(papers_text)
-    ranking_task = make_ranking_task(novelty_task, impact_task, practical_task)
+    ranking_task = make_ranking_task(novelty_task, impact_task, practical_task, top_n=args.top_n)
 
     crew = Crew(
         agents=[

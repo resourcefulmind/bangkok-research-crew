@@ -69,14 +69,14 @@ class ArxivSearchTool(BaseTool):
         )
 
         client = arxiv.Client(
-            page_size=50,
+            page_size=25,
             delay_seconds=5.0,
             num_retries=5,
         )
 
         search = arxiv.Search(
             query=full_query,
-            max_results=50,
+            max_results=25,
             sort_by=arxiv.SortCriterion.SubmittedDate,
             sort_order=arxiv.SortOrder.Descending,
         )

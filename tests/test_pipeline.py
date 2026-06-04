@@ -238,3 +238,19 @@ def test_search_runs_without_an_llm_crew():
         event_types.append(event_queue.get_nowait()["type"])
     assert event_types[0] == "agent_start"
     assert "agent_complete" in event_types
+
+
+def test_ranking_task_respects_top_n():
+    """make_ranking_task should bake the requested N into the prompt."""
+    from bangkok.tasks import (
+        make_novelty_task, make_impact_task, make_practical_task, make_ranking_task,
+    )
+    n = make_novelty_task("papers")
+    i = make_impact_task("papers")
+    p = make_practical_task("papers")
+
+    five = make_ranking_task(n, i, p, top_n=5)
+    assert "top 5" in five.description and "1-5" in five.description
+
+    ten = make_ranking_task(n, i, p)  # default
+    assert "top 10" in ten.description

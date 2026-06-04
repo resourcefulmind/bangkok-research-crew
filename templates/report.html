@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top 10 Research Papers — {{ search_date }}</title>
+    <title>Top {{ papers|length }} Research Papers for {{ search_date }}</title>
     <style>
         {% include "_tokens.html" %}
 
@@ -318,7 +318,7 @@
 <div class="hero">
     <div class="hero-inner">
         <p class="hero-eyebrow">Daily Research Digest</p>
-        <h1>Top 10 AI Papers</h1>
+        <h1>Top {{ papers|length }} AI Papers</h1>
         <p class="hero-subtitle">The most important research papers published on {{ search_date }}, ranked by novelty, impact, and practical relevance.</p>
         <div class="hero-stats">
             <div class="hero-stat">

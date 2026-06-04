@@ -101,7 +101,7 @@ def _run_search(run_id, date, categories, event_queue):
     return papers_text, search_papers
 
 
-def _run_evaluation(run_id, papers_text, event_queue):
+def _run_evaluation(run_id, papers_text, event_queue, top_n=10):
     """Stage B: Evaluate papers on novelty, impact, practicality + rank.
 
     Emits a per-evaluator event sequence so the dashboard shows each evaluator
@@ -114,7 +114,7 @@ def _run_evaluation(run_id, papers_text, event_queue):
     novelty_task = make_novelty_task(papers_text)
     impact_task = make_impact_task(papers_text)
     practical_task = make_practical_task(papers_text)
-    ranking_task = make_ranking_task(novelty_task, impact_task, practical_task)
+    ranking_task = make_ranking_task(novelty_task, impact_task, practical_task, top_n=top_n)
 
     # The four evaluators run sequentially. Each task's callback fires on
     # completion, so we mark it done and start the next one — giving the
@@ -158,7 +158,7 @@ def _run_evaluation(run_id, papers_text, event_queue):
 
 def _run_feedback_checkpoint(
     run_id, eval_result, novelty_task, impact_task, practical_task,
-    event_queue, feedback_event, feedback_data,
+    event_queue, feedback_event, feedback_data, top_n=10,
 ):
     """Feedback checkpoint: show ranking, wait for approve/adjust/abort."""
     ranking_result = eval_result
@@ -204,7 +204,7 @@ def _run_feedback_checkpoint(
 
             ranking_task = make_ranking_task(
                 novelty_task, impact_task, practical_task,
-                feedback=message,
+                feedback=message, top_n=top_n,
             )
             ranking_crew = Crew(
                 agents=[ranking_task.agent],
@@ -263,6 +263,7 @@ def run_pipeline(
     feedback_event: threading.Event,
     feedback_data: dict,
     run_state: dict,
+    top_n: int = 10,
 ) -> None:
     """
     Run the full paper search + evaluation + ranking pipeline.
@@ -278,11 +279,11 @@ def run_pipeline(
             run_id, date, categories, event_queue
         )
         eval_result, novelty_task, impact_task, practical_task = _run_evaluation(
-            run_id, papers_text, event_queue
+            run_id, papers_text, event_queue, top_n
         )
         ranking_result = _run_feedback_checkpoint(
             run_id, eval_result, novelty_task, impact_task, practical_task,
-            event_queue, feedback_event, feedback_data,
+            event_queue, feedback_event, feedback_data, top_n,
         )
         _run_merge_and_render(
             run_id, ranking_result, search_papers, date, categories,

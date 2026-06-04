@@ -26,6 +26,14 @@ def start_run():
         return jsonify({"error": "Missing required field: date"}), 400
 
     categories = data.get("categories", "cs.AI, cs.LG, cs.CL, cs.CV, stat.ML")
+
+    # Output size: accept only 5 or 10, fall back to 10 on anything else.
+    try:
+        top_n = int(data.get("top_n", 10))
+    except (TypeError, ValueError):
+        top_n = 10
+    if top_n not in (5, 10):
+        top_n = 10
     
 
     run_id = str(uuid.uuid4())
@@ -50,7 +58,7 @@ def start_run():
     #spawn pipeline in background thread 
     thread = threading.Thread(
         target=run_pipeline, 
-        args=(run_id, date, categories, event_queue, feedback_event, feedback_data, run_state), 
+        args=(run_id, date, categories, event_queue, feedback_event, feedback_data, run_state, top_n), 
         daemon=True, 
     )
     thread.start()
