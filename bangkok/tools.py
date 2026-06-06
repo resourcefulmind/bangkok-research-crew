@@ -71,8 +71,12 @@ class ArxivSearchTool(BaseTool):
         client = arxiv.Client(
             page_size=25,
             delay_seconds=5.0,
-            num_retries=5,
+            num_retries=0,   # fail fast: retrying after a 429 is what escalates to a multi-day block
         )
+        # arXiv asks callers to identify themselves; the default requests UA reads as a scraper.
+        client._session.headers.update({
+            "User-Agent": "bangkok-research-crew/1.0 (+https://github.com/resourcefulmind/bangkok-research-crew)"
+        })
 
         search = arxiv.Search(
             query=full_query,
@@ -84,17 +88,25 @@ class ArxivSearchTool(BaseTool):
         self.report(f"Querying arXiv for {date_str}…")
 
         papers = []
-        for result in client.results(search):
-            paper = {
-                "title": result.title,
-                "authors": ", ".join([a.name for a in result.authors]),
-                "abstract": result.summary,
-                "arxiv_url": result.entry_id,
-                "pdf_url": str(result.pdf_url),
-                "categories": ", ".join(result.categories),
-                "published": str(result.published),
-            }
-            papers.append(paper)
+        try:
+            for result in client.results(search):
+                paper = {
+                    "title": result.title,
+                    "authors": ", ".join([a.name for a in result.authors]),
+                    "abstract": result.summary,
+                    "arxiv_url": result.entry_id,
+                    "pdf_url": str(result.pdf_url),
+                    "categories": ", ".join(result.categories),
+                    "published": str(result.published),
+                }
+                papers.append(paper)
+        except Exception as e:
+            if "429" in str(e):
+                raise RuntimeError(
+                    "arXiv is rate-limiting us (HTTP 429). Stop and wait before "
+                    "retrying; repeated calls only deepen the block."
+                ) from e
+            raise
 
         # Save for later use in main.py
         ArxivSearchTool.last_results = papers

@@ -65,7 +65,7 @@ This is a single-user tool you run on your own machine, and a worked example for
 
 ## Status
 
-The dashboard works, and earlier runs produced full reports end to end. The most recent change (removing the LLM from the search step) is verified in pieces: the search call, the evaluation, and the rendering each check out, but it hasn't yet had one clean run against live arXiv, which kept rate-limiting us during testing.
+The dashboard works and produces full reports end to end. The de-LLM search and the configurable Top-N are verified end to end with the search stubbed (real evaluation, real rendering), including that Top-N limits the pool correctly. The one piece not yet run against live arXiv is the search fetch itself, because the API rate-limited us repeatedly during testing.
 
 ## Tech
 
