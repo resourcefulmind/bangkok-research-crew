@@ -4,7 +4,7 @@ Point it at a date. It pulls that day's AI papers off arXiv, has a small crew of
 
 You can run it two ways: a web dashboard that streams the agents working in real time, or a one-shot command line.
 
-![Bangkok Research Crew](https://res.cloudinary.com/resourcefulmind-inc/image/upload/v1780481803/dashboard_ha3gln.png)
+![Bangkok Research Crew](https://res.cloudinary.com/resourcefulmind-inc/image/upload/v1780740823/Screenshot_2026-06-06_at_11.13.18_AM_nxphrs.png)
 
 ## What's in it
 
